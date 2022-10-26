@@ -3,9 +3,11 @@ https://sites.google.com/view/ejowerks-speeder/
 
 - This is the original testing Teensy 4 version -- Works on Teensy 4.0 (and should work on the 4.1 but I have not tested it) 
 
-- Depends on Betaflight rc_smoothing to keep it from getting too jumpy and heating up motors/ESCs. Will post bf settings here soon
+- Currently tuned for a quadcopter with a 1500mah 4s battery, 4 inch props with low kv motors. Any deviations in cell count, motor size, kv, prop size, aircraft weight, etc will require tuning the hover PIDs along with max throttle settings. Start low and work your way up
 
-- This speeder flies well, but this code needs a lot of cleanup, more safety features, and could be made far more efficient 
+- Depends on Betaflight rc_smoothing to keep it from getting too jumpy and heating up motors/ESCs. Will post Betaflight settings here soon
+
+- This speeder flies well with this code as-is, but this it needs a lot of cleanup, more safety features, and could be made far more efficient 
 
 
 
@@ -16,6 +18,7 @@ THIS EXPERIMENTAL PROJECT INTERCEPTS RC SIGNALS AND FULLY AUTOMATES THRUST CONTR
 MALFUNCTIONS CAN RESULT IN AIRCRAFT FLYAWAYS OR ***PERMANENT DISFIGUREMENT TO YOUR FACE, HANDS, AND OTHER BODY PARTS***
 
 DO NOT OPERATE WITHOUT THE SECONDARY VL53L1X SENSOR - IT IS PART OF THIS PROJECT FOR AN IMPORTANT REASON 
+
 
 ALWAYS TEST WITH PROPELLERS REMOVED
 
