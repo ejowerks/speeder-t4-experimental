@@ -7,6 +7,22 @@ https://sites.google.com/view/ejowerks-speeder/
 
 - Wholly depends on Betaflight rc_smoothing to keep it from getting too jumpy. Will post settings here soon.
 
+
+********************* WARNING ******************************
+
+THIS CODE IS FULLY AUTOMATING THE PRIMARY THRUST CONTROL OF A POWERFUL FLYING DEVICE
+
+MALFUNCTIONS CAN RESULT IN PERMANENT DISFIGUREMENT TO YOUR FACE, HANDS, AND OTHER BODY PARTS
+
+ALWAYS TEST WITH PROPELLERS REMOVED FIRST
+
+USE THIS CODE AT YOUR OWN RISK!!!
+
+********************* WARNING ******************************
+
+
+
+
 <hr>
 
 ### In a nutshell:
