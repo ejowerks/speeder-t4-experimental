@@ -1,10 +1,11 @@
 # Original EjoWerks Speeder
 https://sites.google.com/view/ejowerks-speeder/
 
-- This is the original testing Teensy 4 version -- Works on Teensy 4.0 (and 4.1 but I have not tested the 4.1) 
+- This is the original testing Teensy 4 version -- Works on Teensy 4.0 (and should work on the 4.1 but I have not tested it) 
 
-- This code is a horrifically bastardized version of [dRehmFlight](https://github.com/nickrehm/dRehmFlight) without IMU code thrown together just to make it work. 
-It is messy, needs unused stuff removed, lots of unused vars, etc.
+- This code is a horrifically bastardized version of [dRehmFlight](https://github.com/nickrehm/dRehmFlight) without IMU and mixer code thrown together just to make it work. It is messy, needs unused stuff removed, lots of unused vars, etc.
+
+- Wholly depends on Betaflight rc_smoothing to keep it from getting too jumpy. Will post settings here soon.
 
 <hr>
 
