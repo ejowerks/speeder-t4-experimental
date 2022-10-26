@@ -3,22 +3,25 @@ https://sites.google.com/view/ejowerks-speeder/
 
 - This is the original testing Teensy 4 version -- Works on Teensy 4.0 (and should work on the 4.1 but I have not tested it) 
 
-- This code is a horrifically bastardized version of [dRehmFlight](https://github.com/nickrehm/dRehmFlight) without IMU and mixer code thrown together just to make it work. It is messy, needs unused stuff removed, lots of unused vars, etc.
+- Depends on Betaflight rc_smoothing to keep it from getting too jumpy and heating up motors/ESCs. Will post bf settings here soon
 
-- Wholly depends on Betaflight rc_smoothing to keep it from getting too jumpy. Will post settings here soon.
+- This speeder flies well, but this code needs a lot of cleanup, more safety features, and could be made far more efficient 
 
 
-********************* WARNING ******************************
 
-THIS CODE IS FULLY AUTOMATING THE PRIMARY THRUST CONTROL OF A POWERFUL FLYING DEVICE
+****************************** WARNING ******************************
 
-MALFUNCTIONS CAN RESULT IN FLYAWAYS AND ***PERMANENT DISFIGUREMENT TO YOUR FACE, HANDS, AND OTHER BODY PARTS***
+THIS EXPERIMENTAL CODE FULLY AUTOMATES THRUST CONTROL OF A POWERFUL FLYING DEVICE
 
-ALWAYS TEST WITH PROPELLERS REMOVED FIRST
+MALFUNCTIONS CAN RESULT IN AIRCRAFT FLYAWAYS OR ***PERMANENT DISFIGUREMENT TO YOUR FACE, HANDS, AND OTHER BODY PARTS***
 
-USE THIS CODE AT YOUR OWN RISK!!!
+ALWAYS TEST WITH PROPELLERS REMOVED
 
-********************* WARNING ******************************
+YOU HAVE BEEN WARNED -- USE THIS CODE AT YOUR OWN RISK!
+
+(GOOGLE IMAGE SEARCH "DRONE INJURIES" FOR INSPIRATION)
+
+****************************** WARNING ******************************
 
 
 
