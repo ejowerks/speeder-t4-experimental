@@ -37,7 +37,7 @@ YOU HAVE BEEN WARNED -- USE THIS CODE AT YOUR OWN RISK!
 
 TF-Mini-Plus ToF @ 1khz # Serial #  -> Teensy 4.0 Serial2 --> Mixer PID, etc
 
-Flysky FS-X6B RC Car RX # PPM # -> Teensy 4.0 pin 0 --> Mixer Code -> SBUS out -> BetaFlight SBUS in
+Flysky FS-X6B RC Car RX # PPM # -> Teensy 4.0 pin 16 --> Mixer Code -> SBUS out -> BetaFlight SBUS in
 
 VL53L1X Backup ToF @ 50hz # IC2 # -> Teensy 4.0 IC2
 
