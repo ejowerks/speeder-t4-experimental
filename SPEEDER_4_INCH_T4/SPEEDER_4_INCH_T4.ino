@@ -4,12 +4,14 @@
  *  This version has only been implemented with the Teensy 4.0 but may work with 4.1, etc
  *  
  *  Please note this is experimental code that requires arduino-based tinkering experience
+ *
+ *  Heed the warnings in readme file
  *  
  *  You should have 5 tabs if you load this correctly in Arduino IDE
  *  
  *  Random snippets of code and layout methodology borrowed from https://github.com/nickrehm/dRehmFlight 
  *  
- *  This project has at 6 months of random experimentation buried in it so enjoy the wacky arithmetic,
+ *  This project has at least 6 months of random experimentation buried in it so enjoy the wacky arithmetic,
  *  redundant code, unnecessary vars, and general inconsistency. I'm sure a good hacker could do this in a tenth of the space
  *  but hey, it FLIES :-)
  *  
