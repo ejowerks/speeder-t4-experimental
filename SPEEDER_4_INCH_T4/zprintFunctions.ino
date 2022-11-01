@@ -13,6 +13,22 @@ void printRadioData() {
   Serial.println(channel_6_pwm);
 }
 
+
+void printBatt() {
+  Serial.print(" voltLowTimer: ");
+  Serial.print(voltLowTimer);
+  Serial.print(" ltm_voltagecell_raw: ");
+  Serial.print(ltm_voltagecell_raw);
+  Serial.print(" ltm_voltagecell: ");
+  Serial.print(ltm_voltagecell);
+  Serial.print(" battCurr: ");
+  Serial.print(battCurr);
+  Serial.print(" battCurrPerc: ");
+  Serial.print(battCurrPerc);
+  Serial.print("% maxThruster: ");
+  Serial.println(maxThruster);
+}
+
 void printBig() {
   Serial.print(" thrMax: ");
   Serial.print(thrMax);
