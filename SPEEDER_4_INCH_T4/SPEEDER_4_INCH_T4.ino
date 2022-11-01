@@ -4,14 +4,12 @@
  *  This version has only been implemented with the Teensy 4.0 but may work with 4.1, etc
  *  
  *  Please note this is experimental code that requires arduino-based tinkering experience
- *
- *  Heed the warnings in readme file
  *  
  *  You should have 5 tabs if you load this correctly in Arduino IDE
  *  
  *  Random snippets of code and layout methodology borrowed from https://github.com/nickrehm/dRehmFlight 
  *  
- *  This project has at least 6 months of random experimentation buried in it so enjoy the wacky arithmetic,
+ *  This project has at 6 months of random experimentation buried in it so enjoy the wacky arithmetic,
  *  redundant code, unnecessary vars, and general inconsistency. I'm sure a good hacker could do this in a tenth of the space
  *  but hey, it FLIES :-)
  *  
@@ -43,10 +41,9 @@ int hoverHeight = 400; // mm
 
 /// TO DO: Clean out unused vars
 const uint32_t currentMillis = millis();
-const int numReadings = 30; // anti-skid num readings for averaging filter
-int landing_Time = 0,thrMaxTmp = 0,readings[numReadings],readIndex = 0,total = 0, average = 0, thrMaxClimb = 0, turnheight = 0, autolanding = 0, pitch_des_flow = 0, roll_des_flow = 0, pitch_des_flow_raw = 0, roll_sum, roll_des_flow_raw = 0, escIDLE = 0, escWrite = 0, isFlying = 0, stmix_pos, maxThruster = 250, ltm_pitch = 0, ltm_roll = 0, killAll = 0, led = 13, rangeBackFiltered, thro_channel_rx, m1_command_PWM, hoverHeightRaw, thrMin, thrMax, Engage = 0, prevEngage = 0, thruster_loop_Time, print_loop_Time, flow_loop_Time, radio_rw_loop_Time, toF_loop_Time, thr_Wind_time, rampTime, hoverThrottle, rangeRaw, rangeFrontRaw, rangeBackRaw, rangeFiltered, ranger_loop_Time, ledInterval;
-float criticalVolt, lowVolt, ltm_voltagecell, ltm_voltage, m1_command_scaled, KpTune, KiTune, KdTune, KpHover, KiHover, KdHover, dt, hoverRatio, hoverRatio2;
-unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channel_5_pwm, channel_6_pwm, channel_7_pwm, channel_8_pwm, channel_10_pwm, channel_11_pwm, channel_12_pwm, channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev, channel_5_pwm_prev, channel_6_pwm_prev, idleFlow, blink_counter, blink_delay, voltLowTimer, voltLowTimerMillis, valueChangeTime, current_time, prev_time, print_counter, serial_counter, engageSwitch, armSwitch, engageDelay;
+int slowDown = 0, battCurr,battCurrPerc,landing_Time = 0,thrMaxTmp = 0,thrMaxClimb = 0, turnheight = 0, autolanding = 0, pitch_des_flow = 0, roll_des_flow = 0, pitch_des_flow_raw = 0, roll_sum, roll_des_flow_raw = 0, escIDLE = 0, escWrite = 0, isFlying = 0, stmix_pos, maxThruster, ltm_pitch = 0, ltm_roll = 0, killAll = 0, led = 13, rangeBackFiltered, thro_channel_rx, m1_command_PWM, hoverHeightRaw, thrMin, thrMax, Engage = 0, prevEngage = 0, thruster_loop_Time, print_loop_Time, flow_loop_Time, radio_rw_loop_Time, toF_loop_Time, thr_Wind_time, rampTime, hoverThrottle, rangeRaw, rangeFrontRaw, rangeBackRaw, rangeFiltered, ranger_loop_Time, ledInterval;
+float criticalVolt, lowVolt, ltm_voltagecell_raw, ltm_voltagecell, ltm_voltage, m1_command_scaled, KpTune, KiTune, KdTune, KpHover, KiHover, KdHover, dt, hoverRatio, hoverRatio2;
+unsigned long channel_1_pwm, channel_2_pwm, channel_3_pwm, channel_4_pwm, channel_5_pwm, channel_6_pwm, channel_7_pwm, channel_8_pwm, channel_10_pwm, channel_11_pwm, channel_12_pwm, channel_1_pwm_prev, channel_2_pwm_prev, channel_3_pwm_prev, channel_4_pwm_prev, channel_5_pwm_prev, channel_6_pwm_prev, idleFlow, blink_counter, blink_delay, voltLowTimer, voltCriticalTimer, voltLowTimerMillis, valueChangeTime, current_time, prev_time, print_counter, serial_counter, engageSwitch, armSwitch, engageDelay;
 bool blinkAlternate, sbusFailSafe, sbusLostFrame;
 double deltaYinput, deltaYroll, deltaXinput, deltaXpitch, deltaXsetpoint = 0.00, deltaYsetpoint = 0.00, moveX, moveY, PIDSetPointmm, PIDInputHeightmm, PIDOutThrottlePWM, newThrottlePWM;
 int16_t sbusChannels[16], deltaX = 0, deltaY = 0, deltaXfiltered, deltaYfiltered, tfDist = 0, tfFlux = 0, tfTemp = 0;
@@ -65,6 +62,7 @@ SimpleKalmanFilter throFilter(15, 1, 0.01);
 SimpleKalmanFilter sensorBackFilter(1, 1, 0.01);
 SimpleKalmanFilter pitchFilter(1, 1, 0.01);
 SimpleKalmanFilter rollFilter(1, 1, 0.01);
+SimpleKalmanFilter voltFilter(1, 1, 0.01);
 
 
 void setup() {
@@ -134,6 +132,7 @@ void loop() {
     //printRangers();
     //printFlow();
     //printFlowControl();
+    //printBatt2();
     print_loop_Time = currentMillis + 10;
   }
 
