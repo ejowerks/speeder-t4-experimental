@@ -1,7 +1,7 @@
 void controlSafe() {
 
   /// if you aren't reading LTM from the FC you will need to disable voltage and safety attitude monitoring buried in random places below
-  
+
   uint32_t currentMillis = millis();
 
   /// this smooths out the hover when it's near the setpoint so it can remain aggressive without overshooting it and bouncing
@@ -14,10 +14,10 @@ void controlSafe() {
 
 
   // These next 3 lines will save your aircraft from shooting straight up at full throttle never to be seen again if something gets stuck to the main sensor (yes this happened to me)
-  if ( rangeFiltered > (hoverHeight * 1.75) || rangeBackFiltered > (hoverHeight * 4) || killAll == 1 ) { 
+  if ( rangeFiltered > (hoverHeight * 1.75) || rangeBackFiltered > (hoverHeight * 4) || killAll == 1 ) {
     thrMax = thrMin;
   }
-    
+
   // disarm if tipped too far so you don't get all tangled up in the bushes when you crash
   int maxAngle = 75;
   if ( ( ltm_roll > maxAngle || ltm_roll < -maxAngle) || ( ltm_pitch > maxAngle || ltm_pitch < -maxAngle)) {
@@ -26,51 +26,64 @@ void controlSafe() {
 
   // in main setup area change lion or lipo -- requires LTM telemetry working
   if (batterytype == "lion") {
+    lowVolt = 2.75;
     criticalVolt = 2.52;
   } else {
-    criticalVolt = 3.15;
+    lowVolt = 3.49;
+    criticalVolt = 3.25;
   }
-  if (batterytype == "lion") {
-    lowVolt = 2.75;
-  } else {
-    lowVolt = 3.35;
-  }
-  ltm_voltagecell = ltm_voltage / cells;
 
-  // lower thruster throttle and disarm if volts under Xv for more than X seconds
-  if (ltm_voltagecell < lowVolt && ltm_voltage > 5.0) { // gt 4.0 so no batt needed when on usb
+  ltm_voltagecell_raw = ltm_voltage / cells;
+  ltm_voltagecell = voltFilter.updateEstimate(ltm_voltagecell_raw);
+  int battZero = ((criticalVolt / 4.20) * 100); // example: 3.25/4.20*100 = 77
+  battCurr = ((ltm_voltagecell / 4.20) * 100);
+  battCurrPerc = map(battCurr, battZero, 100, 0, 100);
+
+
+  int maxThrusterAdj = 160;
+  // Poor man's current limiter?
+  if (battCurrPerc <= 10) {
+    maxThrusterAdj = map(battCurrPerc, 0, 10, 60, 160);
+  }
+  maxThruster = map(channel_6_pwm, 1000, 2000, 60, maxThrusterAdj);
+
+  if ( slowDown == 1 ) { // once this is set it doesn't ever go back and get your ass home
+    maxThruster = 40; // override prev thruster settings/curves
+  }
+
+  PIDSetPointmm = hoverHeight + turnheight; // disabled above so this is always on unless landing
+
+
+  // Voltage Stuff try to save batteries
+  if (ltm_voltagecell <= lowVolt && ltm_voltage > 2.0) { // gt 2.0 so no batt needed when on usb
     voltLowTimer++;
   } else {
     voltLowTimer = 0;
-    maxThruster = 140;
   }
 
-  if ( (autolanding == 0) && (voltLowTimer > 15000)) {
+  if (ltm_voltagecell <= criticalVolt && ltm_voltage > 2.0) { // gt 2.0 so no batt needed when on usb
+    voltCriticalTimer++;
+  } else {
+    voltCriticalTimer = 0;
+  }
+
+  // race is over
+  if ( (autolanding == 0) && (voltLowTimer > 5000)) {
+    slowDown = 1;
+  }
+
+  if ( (autolanding == 0) && (voltCriticalTimer > 1500)) { // auto land
+    slowDown = 1;
     autolanding = 1;
     isFlying = 0;
-    maxThruster = 0;
   }
 
-  if (killAll == 0 && ltm_voltagecell <= criticalVolt && ltm_voltage > 4.0) {
+
+  if ( (autolanding == 0) && (voltCriticalTimer > 5000)) { // kill to try to save battery
     killAll = 1;
   }
 
 
-  /// kill entire system immediately
-  if ( armSwitch < 1300 || killAll == 1 ) {
-    thrMax = 200;
-    thrMaxTmp = thrMax;
-    if (armSwitch < 1300) {
-      killAll = 0;
-    }
-    Engage = 0;
-    isFlying = 0;
-    prevEngage = 0;
-    hoverThrottle = 193;
-    PIDOutThrottlePWM = 0;
-    PIDSetPointmm = 0;
-    hoverPID.SetMode(MANUAL);
-  }
 
 
   /// turn system on and start flying
@@ -78,12 +91,6 @@ void controlSafe() {
     Engage = 1;
     thrMaxTmp = thrMax;
     hoverPID.SetMode(AUTOMATIC);
-    if ( (voltLowTimer > 5000)  ) {
-      PIDSetPointmm = hoverHeight / 3;
-      maxThruster = 90;
-    } else {
-      PIDSetPointmm = hoverHeight + turnheight;
-    }
     prevEngage = 1;
     isFlying = 1;
   }
@@ -95,7 +102,6 @@ void controlSafe() {
     thrMin = 200;
     thrMax = thrMaxTmp;
     if (prevEngage == 1) {
-
       if (currentMillis > landing_Time) {
         thrMaxTmp = thrMaxTmp - 10;
         if (PIDSetPointmm > -200) { /// setpoint must be "under-ground" to keep from bouncing around in ground effect/propwash
@@ -103,7 +109,6 @@ void controlSafe() {
         }
         landing_Time = currentMillis + 22;
       }
-
       if ( (thrMaxTmp <= 1000) || (rangeFiltered < 30) ) {
         prevEngage = 0;
         thrMax = 187;
@@ -113,14 +118,26 @@ void controlSafe() {
         autolanding = 0;
         hoverPID.SetMode(MANUAL);
       }
-
     }
-
   }
 
+  /// kill entire system immediately
+  if ( armSwitch < 1300 || killAll == 1 ) {
+    thrMax = 200;
+    thrMaxTmp = thrMax;
+    if (armSwitch < 1300) {
+      killAll = 0;
+    }
+    Engage = 0;
+    isFlying = 0;
+    prevEngage = 0;
+    ledInterval = 800000;
+    hoverThrottle = 193;
+    PIDOutThrottlePWM = 0;
+    PIDSetPointmm = 0;
+    hoverPID.SetMode(MANUAL);
+  }
 }
-
-
 
 void hoverMain() {
   if (tfmP.getData( tfDist, tfFlux, tfTemp)) {
@@ -166,6 +183,7 @@ void radioComms() {
 
   if (currentMillis > radio_rw_loop_Time) {
 
+
     if (taranis == 0) {
 
       float scale = 0.625;
@@ -190,14 +208,11 @@ void radioComms() {
       channel_5_pwm_prev = channel_5_pwm;
       channel_6_pwm_prev = channel_6_pwm;
 
-  
-
-      /// Rear thruster
       escWrite = 0;
-      
+
+      /// rear thruster
       if (( isFlying == 1 ) && ( killAll == 0 )  && (taranis == 0)) {
         if ( rangeFiltered > (hoverHeight * 0.2) ) {
-          maxThruster = map(channel_6_pwm, 1000, 2000, 75, 180);
           escWrite = map(channel_2_pwm, 1500, 2000, 8, maxThruster);
           escWrite = constrain(escWrite, 8, maxThruster);
         }
@@ -210,7 +225,7 @@ void radioComms() {
       ESC.write(escWrite);
 
 
-      //// MAIN STEERING MIXING
+      //// MAIN MIXING
 
       int st_pos = channel_1_pwm;
       int pitchback = 993;
@@ -233,7 +248,6 @@ void radioComms() {
       engageSwitch = armSwitch;
       channel_4_pwm = map(channel_4_pwm, 1000, 2000, 172, 1811);
 
-      
 
       // Set all SBUS to mid channel (sort of a failsafe)
       for (uint8_t i = 0; i < 16; i++) {
@@ -256,7 +270,7 @@ void radioComms() {
       /// Pitchback: Pitch back a little while yawing and rolling so the nose isn't looking at the ground
       /// TurnHeight: Add some hover height on sharp turns because ToF sensor thinks it gains altitude when it rolls
 
-      turnheight = 0; 
+      turnheight = 0;
 
       if (st_pos > 1515) {
         pitchback = map(st_pos, 1500, 2000, 993, 800);
@@ -281,6 +295,10 @@ void radioComms() {
       sbusChannels[4] = constrain(channel_4_pwm, 172, 1811); //armsw aux1 betaflight
       sbusChannels[15] = constrain(thro_channel_rx, 172, 1811); // for pre-arm with throttle trigger
       sbusChannels[8] = 193; /// force angle mode
+      sbusChannels[9] = constrain(channel_3_pwm, 172, 1811);
+      sbusChannels[10] = constrain(channel_5_pwm, 172, 1811);
+      sbusChannels[11] = constrain(channel_6_pwm, 172, 1811);
+
 
     }
 
@@ -323,7 +341,7 @@ void radioComms() {
     }
 
 
-    // What makes time-travel possible
+    //What makes time-travel possible
     sbus.write(&sbusChannels[0]);
 
     radio_rw_loop_Time = currentMillis + 10;
@@ -337,11 +355,14 @@ void flowIt() {
   uint32_t currentMillis = millis();
 
   if (currentMillis > flow_loop_Time) {
+
     //KpTune = 0.0001 * (map(channel_5_pwm, 1000, 2000, 0, 10000));
     //KdTune = 0.0001 * (map(channel_6_pwm, 1000, 2000, 0, 10000));
+
     float KpFlow = 0.25;
     float KiFlow = 0.00;
     float KdFlow = 0.25;
+
 
     flow.readMotionCount(&deltaX, &deltaY);
 
@@ -351,8 +372,9 @@ void flowIt() {
       idleFlow = 0;
     }
 
+
     if ( idleFlow > 100 ) {
-      
+
       if ( (moveX > 500) || (moveX < -500)) {
         moveX = 0;
         moveY = 0;
@@ -374,6 +396,7 @@ void flowIt() {
       pitch_des_flow = pitchFilter.updateEstimate(pitch_des_flow);
       roll_des_flow = rollFilter.updateEstimate(roll_des_flow);
 
+
     } else {
 
       moveX = 0.00;
@@ -385,6 +408,7 @@ void flowIt() {
 
     flow_loop_Time = currentMillis + 10;
 
+
   }
 }
 
@@ -393,6 +417,7 @@ void flowIt() {
 void loopRate(int freq) {
   float invFreq = 1.0 / freq * 1000000.0;
   unsigned long checker = micros();
+
   //Sit in loop until appropriate time has passed
   while (invFreq > (checker - current_time)) {
     checker = micros();
@@ -401,7 +426,8 @@ void loopRate(int freq) {
 
 
 
-/// Init functions
+/// init functions
+
 
 
 void flowInit() {
@@ -417,40 +443,51 @@ void flowInit() {
 void tfInit() {
   delay(20);
   tfmP.begin( &Serial5);
+
   if ( tfmP.sendCommand( SOFT_RESET, 0))
   {
     Serial.printf( "passed.\r\n");
   }
   else tfmP.printReply();
   delay(50);
+
   if ( tfmP.sendCommand( SET_FRAME_RATE, FRAME_1000))
   {
     Serial.printf( "%2uHz.\r\n", FRAME_1000);
   }
   else tfmP.printReply();
   delay(50);
+
   if ( tfmP.sendCommand( STANDARD_FORMAT_MM, 0))
   {
     Serial.printf( "%2uHz.\r\n", STANDARD_FORMAT_MM);
   }
   else tfmP.printReply();
   delay(50);
+
   if ( tfmP.sendCommand( SAVE_SETTINGS, 0))
   {
     Serial.printf( "%2uHz.\r\n", FRAME_1000);
   }
   else tfmP.printReply();
+  delay(50);
+
+  delay(500);            // And wait for half a second.
 }
 
 
 void rearToFinit() {
+
   sensorBack.setTimeout(3000);
   if (!sensorBack.init()) {
     Serial.println("Failed to detect and initialize sensorBack!");
     while (5);
   }
+
   delay(50);
+
   sensorBack.setDistanceMode(VL53L1X::Short);
   sensorBack.setMeasurementTimingBudget(10000);
   sensorBack.startContinuous(10);
+
 }
